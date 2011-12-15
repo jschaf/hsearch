@@ -38,6 +38,7 @@
 ;;; hsearch-mode
 
 (defgroup hsearch nil
+  "A major mode for searching Haskell."
   :prefix "hsearch-"
   :group 'languages)
 
