@@ -117,6 +117,7 @@ Commands:
 
   (view-mode)
 
+  (set (make-local-variable 'word-wrap) t)
   (set (make-local-variable 'view-no-disable-on-exit) t)
   ;; With Emacs 22 `view-exit-action' could delete the selected window
   ;; disregarding whether the help buffer was shown in that window at
