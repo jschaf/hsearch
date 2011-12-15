@@ -18,6 +18,8 @@
 
 ;;; Todo:
 ;;
+;; * Headers with query and and url
+;; 
 ;; * Use local version of Hoogle if available.
 ;; 
 ;; * Parse links in Hoogle output.
@@ -25,12 +27,74 @@
 ;; * Fill paragraphs in long doc strings and break up multiple
 ;;   locations
 
+(require 'button)
 (require 'eieio)
 (require 'url)
 (require 'url-util)
 
 ;;; Code:
 
+
+;;; hsearch-mode
+
+(defgroup hsearch nil
+  :prefix "hsearch-"
+  :group 'languages)
+
+(defcustom hsearch-mode-hook nil
+  "Hook to run when starting hsearch mode."
+  :type 'hook
+  :group 'hsearch)
+
+(defvar hsearch-mode-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map button-buffer-map)
+
+    ;; (define-key map [mouse-2] 'hsearch-follow-mouse)
+    ;; (define-key map "\C-c\C-b" 'hsearch-go-back)
+    ;; (define-key map "\C-c\C-f" 'hsearch-go-forward)
+    ;; (define-key map "\C-c\C-c" 'hsearch-follow-symbol)
+    ;; ;; Documentation only, since we use minor-mode-overriding-map-alist.
+    ;; (define-key map "\r" 'hsearch-follow)
+    map)
+  "Keymap for hsearch mode.")
+
+(defun hsearch-mode ()
+  "Major mode for searching Haskell.
+
+Commands:
+\\{hsearch-mode-map}"
+  (interactive)
+  (kill-all-local-variables)
+  (use-local-map hsearch-mode-map)
+  (setq mode-name "λ-search")
+  (setq major-mode 'hsearch-mode)
+
+  (view-mode)
+
+  (set (make-local-variable 'view-no-disable-on-exit) t)
+  ;; With Emacs 22 `view-exit-action' could delete the selected window
+  ;; disregarding whether the help buffer was shown in that window at
+  ;; all.  Since `view-exit-action' is called with the help buffer as
+  ;; argument it seems more appropriate to have it work on the buffer
+  ;; only and leave it to `view-mode-exit' to delete any associated
+  ;; window(s).
+  (setq view-exit-action
+	(lambda (buffer)
+	  ;; Use `with-current-buffer' to make sure that `bury-buffer'
+	  ;; also removes BUFFER from the selected window.
+	  (with-current-buffer buffer
+	    (bury-buffer))))
+
+  ;; (set (make-local-variable 'revert-buffer-function)
+  ;;      'help-mode-revert-buffer)
+
+  (run-mode-hooks 'hsearch-mode-hook))
+
+
+
+
+;;; Rendering
 (defvar hsearch-display-buffer "*hsearch*"
   "The buffer in which to display query results.")
 
