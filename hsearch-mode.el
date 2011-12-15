@@ -118,10 +118,10 @@ Commands:
 (defmethod render ((obj hsearch-query))
   "Render RESULTS in the current buffer."
   (with-current-buffer (get-buffer-create hsearch-display-buffer)
-    (erase-buffer)
-    (goto-char (point-min))
-    (with-slots (results) obj
-      (loop for result in results
+    (let ((inhibit-read-only t))
+      (erase-buffer)
+      (goto-char (point-min))
+      (loop for result in (oref obj :results)
             do
             (insert (render result))
             (insert "\n"))))
