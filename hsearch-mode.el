@@ -90,17 +90,17 @@
   :group 'hsearch)
 
 (defface hsearch-module-base
-  '((t :inherit font-lock-comment-face))
+  '((t :inherit (list variable-pitch font-lock-comment-face)))
   "A face for the module base of an `hsearch-result' class."
   :group 'hsearch)
 
 (defface hsearch-module-name
-  '((t :inherit font-lock-builtin-face))
+  '((t :inherit (list variable-pitch font-lock-builtin-face)))
   "A face for the module name of an `hsearch-result' class."
   :group 'hsearch)
 
 (defface hsearch-doc
-  '((t :inherit font-lock-doc-face))
+  '((t :inherit (list variable-pitch  font-lock-doc-face)))
   "A face for the doc of an `hsearch-result' class."
   :group 'hsearch)
 
