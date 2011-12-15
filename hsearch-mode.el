@@ -103,7 +103,7 @@ Commands:
   "Interface to provide `render'."
   :abstract t)
 (defmethod render ((obj hsearch-renderable))
-  (error "Called abstract method: Must define `render'."))
+  (error "Called abstract method: Must define `render'"))
 
 (defclass hsearch-query (hsearch-renderable)
   ((query :initarg :query)
@@ -315,8 +315,8 @@ Doesn't signal an error."
 
 (defun hoogle-callback-display-results (status &rest cbargs)
   "The callback function for `url-retrieve'.
-Argument STATUS result of `url-retrieve'.
-Optional argument CBARGS optional callback args passed from `url-retrieve'."
+STATUS is result of `url-retrieve'.
+CBARGS are the callback args passed from `url-retrieve'."
   (when status
     ;; FIXME: error handling
     nil)
@@ -424,4 +424,4 @@ QUERY is an `hsearch-query' class."
 
 (provide 'hsearch-mode)
 
-;;; hsearch.el ends here
+;;; hsearch-mode.el ends here
