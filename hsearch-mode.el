@@ -244,12 +244,11 @@ SIGNATURE should include the double-colon, e.g ':: a -> b'")
 (defmethod render ((obj hsearch-result-signature))
   "Render HSEARCH-RESULT-SIGNATURE in the current buffer."
   (with-slots (signature) obj
-    (hsearch-fontify-string signature font-lock-type-face)
-    signature))
+    (hsearch-fontify-string signature hsearch-type)))
 
 (defclass hsearch-result-location ()
-  ((module-category :initarg :module-category)
-   (module-category-link :initarg :module-category-link)
+  ((module-base :initarg :module-base)
+   (module-base-link :initarg :module-base-link)
    (module-name :initarg :module-name
                 :initform "")
    (module-name-link :initarg :module-name-link))
@@ -257,12 +256,12 @@ SIGNATURE should include the double-colon, e.g ':: a -> b'")
 
 (defmethod render ((obj hsearch-result-location))
   "Render a location for `hsearch-result'."
-  (with-slots (module-category module-category-link
+  (with-slots (module-base module-base-link
                module-name module-name-link)
       obj
-    (hsearch-fontify-string module-category font-lock-comment-face)
-    (hsearch-fontify-string module-name font-lock-preprocessor-face)
-    (format "%s %s" module-category module-name)))
+    (hsearch-fontify-string module-base hsearch-module-base)
+    (hsearch-fontify-string module-name hsearch-name)
+    (format "%s %s" module-base module-name)))
 
 (defclass hsearch-result-doc ()
   ((doc :initarg :doc))
@@ -407,7 +406,7 @@ QUERY is an `hsearch-query' class."
             (re-search-forward hoogle-a-tag-regexp)
             (setq str (match-string 1))
             (setq location
-                  (hsearch-result-location "" :module-category str))
+                  (hsearch-result-location "" :module-base str))
 
             
             (if (search-forward "class='p2'" max-point 'noerror)
