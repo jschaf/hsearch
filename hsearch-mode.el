@@ -283,7 +283,11 @@ SIGNATURE should include the double-colon, e.g ':: a -> b'")
       obj
     (hsearch-fontify-string module-base 'hsearch-module-base)
     (hsearch-fontify-string module-name 'hsearch-module-name)
-    (format "%s %s" module-base module-name)))
+    (concat module-base
+            ;; Looks strange if this space is monospaced between two
+            ;; variable spaced strings
+            (hsearch-fontify-string " " 'hsearch-module-name)
+            module-name)))
 
 (defclass hsearch-result-doc ()
   ((doc :initarg :doc))
