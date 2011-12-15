@@ -174,12 +174,12 @@ Commands:
 
 (defsubst hsearch-propertize-string (str &rest properties)
   "Replace all properties of STR with PROPERTIES."
-  (set-text-properties 0 (length str) properties str))
+  (set-text-properties 0 (length str) properties str)
+  str)
 
 (defun hsearch-fontify-string (str face)
   "Modify STRs font-lock-face property to FACE and return STR."
-  (hsearch-propertize-string str 'font-lock-face face)
-  str)
+  (hsearch-propertize-string str 'font-lock-face face))
 
 (defsubst hsearch-empty-or-string (str format-str)
   "If STR then return FORMAT-STR, else return the empty string."
