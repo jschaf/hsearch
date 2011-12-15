@@ -7,25 +7,63 @@
 ;; Keywords:  languages, haskell, hoogle, hayoo
 
 ;;; Commentary:
+;;
+;; `hsearch-query' is the overall class, containing all meta-info
+;; including the query, the url and a list of all results.  This class
+;; implements `hsearch-renderable', an interface that provides
+;; `render-to-buffer'.
+;;
+;; `hsearch-result' is class for each indiviual result returned from
+;; the query.
+
+;;; Todo:
+;;
+;; * Use local version of Hoogle if available.
 ;; 
+;; * Parse links in Hoogle output.
+;;
+;; * Fill paragraphs in long doc strings and break up multiple
+;;   locations
 
 (require 'eieio)
+(require 'url)
+(require 'url-util)
 
 ;;; Code:
-(setq lexical-binding t)
 
-(defclass hsearch-results ()
+(defvar hsearch-display-buffer "*hsearch*"
+  "The buffer in which to display query results.")
+
+(defclass hsearch-renderable () (())
+  "Interface to provide `render'."
+  :abstract t)
+(defmethod render ((obj hsearch-renderable))
+  (error "Called abstract method: Must define `render'."))
+
+(defclass hsearch-query (hsearch-renderable)
   ((query :initarg :query)
    (url :initarg :url)
-   (answers :initarg :answers
+   (results :initarg :results
             :initform '()))
   "A class for the overall results.")
 
-(defmethod add-answer ((obj hsearch-results) answer)
-  "Add an answer (i.e. a match) to HSEARCH-RESULTS."
-  (object-add-to-list obj :answers answer 'append))
+(defmethod add-result ((obj hsearch-query) result)
+  "Add a result HSEARCH-QUERY."
+  (object-add-to-list obj :results result 'append))
 
-(defclass hsearch-answer ()
+(defmethod render ((obj hsearch-query))
+  "Render RESULTS in the current buffer."
+  (with-current-buffer (get-buffer-create hsearch-display-buffer)
+    (erase-buffer)
+    (goto-char (point-min))
+    (with-slots (results) obj
+      (loop for result in results
+            do
+            (insert (render result))
+            (insert "\n"))))
+  (pop-to-buffer hsearch-display-buffer))
+
+(defclass hsearch-result (hsearch-renderable)
   ((category :initarg :category)
    (name :initarg :name)
    (signature :initarg :signature)
@@ -33,12 +71,285 @@
               :initform '())
    (doc :initarg :doc
         :initform ""))
-  "A class for an individual answer.")
+  "A class for an individual result.")
 
-(defmethod add-location ((obj hsearch-answer) location)
-  "Add a location to HSEARCH-ANSWER.locations."
+(defmethod add-location ((obj hsearch-result) location)
+  "Add a location to HSEARCH-RESULT.locations."
   (object-add-to-list obj :locations location 'append))
 
+(defsubst hsearch-propertize-string (str &rest properties)
+  "Replace all properties of STR with PROPERTIES."
+  (set-text-properties 0 (length str) properties str))
+
+(defun hsearch-fontify-string (str face)
+  "Modify STRs font-lock-face property to FACE and return STR."
+  (hsearch-propertize-string str 'font-lock-face face)
+  str)
+
+(defsubst hsearch-empty-or-string (str format-str)
+  "If STR then return FORMAT-STR, else return the empty string."
+  (if (string= "" str)
+      ""
+    (format format-str str)))
+
+(defmethod render ((obj hsearch-result))
+  "Render fields within HSEARCH-RESULT."
+  (with-slots (category name signature locations doc)
+      obj
+    ;; This must be in the right order
+    (let* ((category-str (hsearch-empty-or-string (render category) "%s "))
+           (name-str (render name))
+           (signature-str (hsearch-empty-or-string (render signature) " %s"))
+           (doc-str (hsearch-empty-or-string (render doc) "%s\n")))
+      (concat category-str
+              name-str
+              signature-str
+              "\n"
+              ;; Locations is a list of location objects
+              (mapconcat (lambda (loc) (render loc)) locations
+                         (hsearch-fontify-string ", " font-lock-doc-face))
+              "\n"
+              doc-str))))
+
+(defclass hsearch-result-category (hsearch-renderable)
+  ((category :initarg :category
+             :initform ""))
+  "The category of a hsearch-result.")
+
+(defmethod render ((obj hsearch-result-category))
+  "Render the category for `hsearch-result'."
+  (with-slots (category) obj
+    (hsearch-fontify-string category font-lock-comment-face)
+    ;; Don't specify functions, that's the default
+    (unless (string= "function" category)
+      category)))
+
+(defclass hsearch-result-name (hsearch-renderable)
+  ((name :initarg :name)
+   (doc-link :initarg :doc-link
+             :initform ""))
+  "The name of a hsearch-result.")
+
+(defmethod render ((obj hsearch-result-name))
+  "Render the name for an HSEARCH-RESULT."
+  (with-slots (name doc-link) obj
+    (hsearch-propertize-string
+     name
+     'font-lock-face font-lock-function-name-face
+     'mouse-face 'highlight
+     'help-echo (if (string= doc-link "")
+                    nil
+                  (format "LINK: %s" doc-link)))
+    name))
+
+(defclass hsearch-result-signature (hsearch-renderable)
+  ((signature :initarg :signature))
+  "The type signature for a `hsearch-result'.
+SIGNATURE should include the double-colon, e.g ':: a -> b'")
+
+(defmethod render ((obj hsearch-result-signature))
+  "Render HSEARCH-RESULT-SIGNATURE in the current buffer."
+  (with-slots (signature) obj
+    (hsearch-fontify-string signature font-lock-type-face)
+    signature))
+
+(defclass hsearch-result-location ()
+  ((module-category :initarg :module-category)
+   (module-category-link :initarg :module-category-link)
+   (module-name :initarg :module-name
+                :initform "")
+   (module-name-link :initarg :module-name-link))
+  "A location that provides the query.")
+
+(defmethod render ((obj hsearch-result-location))
+  "Render a location for `hsearch-result'."
+  (with-slots (module-category module-category-link
+               module-name module-name-link)
+      obj
+    (hsearch-fontify-string module-category font-lock-comment-face)
+    (hsearch-fontify-string module-name font-lock-preprocessor-face)
+    (format "%s %s" module-category module-name)))
+
+(defclass hsearch-result-doc ()
+  ((doc :initarg :doc))
+  "The documentation for the result.")
+
+(defmethod render ((obj hsearch-result-doc))
+  "Render HSEARCH-RESULT-DOC in the current buffer."
+  (with-slots (doc) obj
+    (hsearch-fontify-string doc font-lock-doc-face)
+    doc))
+
+
+;;; Utilites
+(defsubst hsearch-strip-tags (str)
+  "Remove all HTML tags from STR."
+  (replace-regexp-in-string "</?[^<>]+>" "" str))
+
+(defun hsearch-decode-html-entities (str)
+  "Replace HTML entities in STR with their literal value.
+
+Only replaces those entities common to Haskell, i.e. ones seen in
+type signatures.
+
+I feel like this function is already somewhere inside Emacs."
+  (let* ((entity-pairs '(("&amp;" . "&")
+                         ("&lt;" . "<")
+                         ("&gt;" . ">")
+                         ("&quot;" . "\"")))
+         (encoded-entities (mapcar 'car entity-pairs))
+         (entity-regexp (regexp-opt encoded-entities)))
+    (replace-regexp-in-string
+     entity-regexp
+     (lambda (match-text) (cdr (assoc match-text entity-pairs)))
+     str)))
+
+(defun hsearch-chomp (str)
+  "Chomp leading and tailing whitespace from STR."
+  (while (string-match "\\`\n+\\|^\\s-+\\|\\s-+$\\|\n+\\'"
+                       str)
+    (setq str (replace-match "" t t str)))
+  str)
+
+
+;;; Hoogle support
+
+(defvar hoogle-base-url
+  "http://www.haskell.org/hoogle/?hoogle="
+  "The base URL to use to search.
+Concatenating the query to this string should be a valid
+search URL.")
+
+(defun hoogle-build-search-url (query)
+  "Return a valid hoogle URL for QUERY."
+  (concat hoogle-base-url
+          (url-hexify-string query)))
+
+;;;###autoload
+(defun hoogle-search (query)
+  "Search Hoogle for QUERY and return results as alist."
+  (interactive)
+  (let ((url (hoogle-build-search-url query)))
+    (url-retrieve url
+                  #'hoogle-callback-display-results
+                  (list query url))))
+
+(defvar hoogle-a-tag-regexp
+  ">\\(.*?\\)</a>"
+  "Extract text from between an <a> tag into the 1st group.")
+
+(defvar hoogle-span-tag-regexp
+  "<span>\\(\\([\r\n]\\|.\\)*?\\)</span>"
+  "Extract text from between a <span> tag into the 1st group.")
+
+(defsubst hoogle-search-bound (str)
+  "Return the location of the next STR or max point.
+Doesn't signal an error."
+  (or (save-excursion (search-forward str nil 'noerror))
+      (point-max)))
+
+(defun hoogle-callback-display-results (status &rest cbargs)
+  "The callback function for `url-retrieve'.
+Argument STATUS result of `url-retrieve'.
+Optional argument CBARGS optional callback args passed from `url-retrieve'."
+  (when status
+    ;; FIXME: error handling
+    nil)
+  (let ((query (make-instance 'hsearch-query)))
+   (when cbargs
+     (assert (and (listp cbargs) (eq (length cbargs) 2)))
+     (oset query :query (car cbargs))
+     (oset query :url (cadr cbargs)))
+   (setq query (hoogle-parse-html query))
+   (render query)))
+
+(defun hoogle-parse-html (query)
+  "Add results from the parsed HTML to the QUERY object.
+QUERY is an `hsearch-query' class."
+  (goto-char (point-min))
+  (let (result
+        str
+        max-point
+        current-point
+        location)
+    ;; Each entry is a div.ans
+    (while (search-forward "class='ans'" nil 'noerror)
+      (setq result (make-instance 'hsearch-result))
+
+      ;; Get category from the first a.dull
+      (search-forward "class='dull'")
+      (re-search-forward hoogle-a-tag-regexp)
+      ;; empty is function, data is data, class is class, module is
+      ;; module
+      (setq str (hsearch-strip-tags (match-string 1)))
+      (setq str (hsearch-chomp str))
+      (oset result :category (hsearch-result-category "" :category str))
+      
+      ;; Get name from a.a
+      (search-forward "class='a'")
+      (re-search-forward hoogle-a-tag-regexp)
+      ;; Remove <b> used for substring matching (e.g. map in
+      ;; mapAccumL) and convert html entities (e.g. &lt;*&gt; to <*>)
+      (setq str (hsearch-strip-tags (match-string 1)))
+      (setq str (hsearch-decode-html-entities str))
+      (oset result :name (hsearch-result-name "" :name str))
+
+      ;; Get type signature from second a.dull
+      (search-forward "class='dull'")
+      (re-search-forward hoogle-a-tag-regexp)
+      ;; By stripping tags, we throw away some information.  Namely,
+      ;; how hoogle matches signatures that use different type
+      ;; variables.  We could add text-properties to the specific
+      ;; classes so we don't have redo the logic.
+      (setq str (hsearch-strip-tags (match-string 1)))
+      (setq str (hsearch-decode-html-entities str))
+      (setq str (hsearch-chomp str))
+      (oset result :signature (hsearch-result-signature "" :signature str))
+      
+      ;; Get defined locations from div.from.
+      (search-forward "class='from'")
+      (setq max-point (hoogle-search-bound "</div>"))
+      (loop do
+            (search-forward "class='p1'" max-point)
+            (re-search-forward hoogle-a-tag-regexp)
+            (setq str (match-string 1))
+            (setq location
+                  (hsearch-result-location "" :module-category str))
+
+            
+            (if (search-forward "class='p2'" max-point 'noerror)
+                (progn (re-search-forward hoogle-a-tag-regexp)
+                       (oset location :module-name (match-string 1))))
+
+            (add-location result location)
+            while
+            (save-excursion (search-forward "class='p" max-point 'noerror)))
+      (goto-char max-point)
+
+      ;; Get optional documentation string.  Maybe spread across
+      ;; multiple lines.  If it exists, assume it's always wrapped in
+      ;; a span tag.
+      (setq current-point (point))
+      (setq max-point (hoogle-search-bound "class='ans'"))
+      (if (search-forward "class='doc" max-point 'noerror)
+          (progn (re-search-forward hoogle-span-tag-regexp)
+                 (setq str (hsearch-strip-tags (match-string 1)))
+                 (setq str (hsearch-decode-html-entities str))
+                 (oset result :doc (hsearch-result-doc "" :doc str)))
+        ;; If there is no doc, we need to go back because the max
+        ;; bound for doc was "class='ans'".  Since search-forward
+        ;; moved us to the end of the match, we won't see it next
+        ;; iteration unless we move back.
+        (oset result :doc (hsearch-result-doc "" :doc ""))
+        (goto-char current-point))
+
+      (add-result query result))
+    query))
+
+
+;;; Hayoo support
+
+
 ;; Enable lexical binding.  Shouldn't affect Emacsen without lexbind
 ;; support.
 ;;
