@@ -137,8 +137,15 @@ Commands:
 
   (run-mode-hooks 'hsearch-mode-hook))
 
-
-
+(defun hsearch-buffer ()
+  "Initialize and return the *hsearch* buffer."
+  (let ((buf (get-buffer hsearch-display-buffer)))
+    (if buf
+        buf
+      (setq buf (generate-new-buffer hsearch-display-buffer))
+      (with-current-buffer buf
+        (hsearch-mode)))
+    buf))
 
 ;;; Rendering
 (defvar hsearch-display-buffer "*hsearch*"
