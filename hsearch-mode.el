@@ -1,4 +1,4 @@
-;;; hsearch-mode.el --- Elisp functions to search Haskell
+;;; hsearch-mode.el --- a major mode to search Haskell
 
 ;; Author:  Joe Schafer <joe@jschaf.com>
 ;; Maintainer:  Joe Schafer <joe@jschaf.com>
