@@ -202,7 +202,7 @@ Commands:
               "\n"
               ;; Locations is a list of location objects
               (mapconcat (lambda (loc) (render loc)) locations
-                         (hsearch-fontify-string ", " hsearch-doc))
+                         (hsearch-fontify-string ", " 'hsearch-doc))
               "\n"
               doc-str))))
 
@@ -214,7 +214,7 @@ Commands:
 (defmethod render ((obj hsearch-result-category))
   "Render the category for `hsearch-result'."
   (with-slots (category) obj
-    (hsearch-fontify-string category hsearch-category)
+    (hsearch-fontify-string category 'hsearch-category)
     ;; Don't specify functions, that's the default
     (unless (string= "function" category)
       category)))
@@ -230,7 +230,7 @@ Commands:
   (with-slots (name doc-link) obj
     (hsearch-propertize-string
      name
-     'font-lock-face hsearch-name
+     'font-lock-face 'hsearch-name
      'mouse-face 'highlight
      'help-echo (if (string= doc-link "")
                     nil
@@ -244,7 +244,7 @@ SIGNATURE should include the double-colon, e.g ':: a -> b'")
 (defmethod render ((obj hsearch-result-signature))
   "Render HSEARCH-RESULT-SIGNATURE in the current buffer."
   (with-slots (signature) obj
-    (hsearch-fontify-string signature hsearch-type)))
+    (hsearch-fontify-string signature 'hsearch-type)))
 
 (defclass hsearch-result-location ()
   ((module-base :initarg :module-base)
@@ -259,8 +259,8 @@ SIGNATURE should include the double-colon, e.g ':: a -> b'")
   (with-slots (module-base module-base-link
                module-name module-name-link)
       obj
-    (hsearch-fontify-string module-base hsearch-module-base)
-    (hsearch-fontify-string module-name hsearch-name)
+    (hsearch-fontify-string module-base 'hsearch-module-base)
+    (hsearch-fontify-string module-name 'hsearch-module-name)
     (format "%s %s" module-base module-name)))
 
 (defclass hsearch-result-doc ()
@@ -270,7 +270,7 @@ SIGNATURE should include the double-colon, e.g ':: a -> b'")
 (defmethod render ((obj hsearch-result-doc))
   "Render HSEARCH-RESULT-DOC in the current buffer."
   (with-slots (doc) obj
-    (hsearch-fontify-string doc hsearch-doc)))
+    (hsearch-fontify-string doc 'hsearch-doc)))
 
 
 ;;; Utilites
