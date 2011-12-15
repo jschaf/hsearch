@@ -60,6 +60,36 @@
     map)
   "Keymap for hsearch mode.")
 
+(defface hsearch-category
+  '((t :inherit font-lock-comment-face))
+  "A face for the category of an `hsearch-result' class."
+  :group 'hsearch)
+
+(defface hsearch-name
+  '((t :inherit font-lock-function-name-face))
+  "A face for the name of an `hsearch-result' class."
+  :group 'hsearch)
+
+(defface hsearch-type
+  '((t :inherit font-lock-type-face))
+  "A face for the type signature of an `hsearch-result' class."
+  :group 'hsearch)
+
+(defface hsearch-module-base
+  '((t :inherit font-lock-comment-face))
+  "A face for the module base of an `hsearch-result' class."
+  :group 'hsearch)
+
+(defface hsearch-module-name
+  '((t :inherit font-lock-builtin-face))
+  "A face for the module name of an `hsearch-result' class."
+  :group 'hsearch)
+
+(defface hsearch-doc
+  '((t :inherit font-lock-doc-face))
+  "A face for the doc of an `hsearch-result' class."
+  :group 'hsearch)
+
 (defun hsearch-mode ()
   "Major mode for searching Haskell.
 
