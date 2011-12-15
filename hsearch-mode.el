@@ -346,7 +346,7 @@ QUERY is an `hsearch-query' class."
       ;; empty is function, data is data, class is class, module is
       ;; module
       (setq str (hsearch-strip-tags (match-string 1)))
-      (setq str (hsearch-chomp str))
+      (setq str (hsearch-decode-html-entities (hsearch-chomp str)))
       (oset result :category (hsearch-result-category "" :category str))
       
       ;; Get name from a.a
