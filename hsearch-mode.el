@@ -300,6 +300,18 @@ SIGNATURE should include the double-colon, e.g ':: a -> b'")
 
 
 ;;; Utilites
+
+(defun hsearch-fill-text-string (str)
+  "Fill STR with `fill-region' and return STR."
+  (with-temp-buffer
+    ;; Space is normalized in HTML to one space, so there are no
+    ;; double spaces to end a sentence.
+    (let ((sentence-end-double-space nil)
+          (fill-column 78))
+      (insert str)
+      (fill-region (point-min) (point-max))
+      (buffer-substring (point-min) (point-max)))))
+
 (defsubst hsearch-strip-tags (str)
   "Remove all HTML tags from STR."
   (replace-regexp-in-string "</?[^<>]+>" "" str))
