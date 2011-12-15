@@ -6,12 +6,26 @@
 ;; Version:  0.1
 ;; Keywords:  languages, haskell, hoogle, hayoo
 
+;;; Installation:
+;;
+;; Place hsearch-mode.el on your `load-path' by adding this to your
+;; `user-init-file', usually ~/.emacs or ~/.emacs.d/init.el
+;;
+;; (add-to-list 'load-path "~/YOUR_LOAD_PATH")
+;;
+;; Load the code:
+;;
+;; (autoload 'hsearch-mode "hsearch"
+;;           "Major mode for searching Haskell." t)
+
 ;;; Commentary:
 ;;
+;; The most recent code is at http://github.com/jschaf/hsearch
+;;
 ;; `hsearch-query' is the overall class, containing all meta-info
-;; including the query, the url and a list of all results.  This class
-;; implements `hsearch-renderable', an interface that provides
-;; `render-to-buffer'.
+;; including the query and url as well as a list of all results.  This
+;; class implements `hsearch-renderable', an interface that provides
+;; `render'.
 ;;
 ;; `hsearch-result' is class for each indiviual result returned from
 ;; the query.
