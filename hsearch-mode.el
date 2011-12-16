@@ -418,7 +418,6 @@ search URL.")
   (concat hoogle-base-url
           (url-hexify-string query)))
 
-;;;###autoload
 (defun hoogle-search (query)
   "Search Hoogle for QUERY and return results as alist."
   (interactive)
