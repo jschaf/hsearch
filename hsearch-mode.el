@@ -61,18 +61,15 @@
   :type 'hook
   :group 'hsearch)
 
-(defvar hsearch-mode-map
-  (let ((map (make-sparse-keymap)))
-    (set-keymap-parent map button-buffer-map)
+(defcustom hsearch-prompt "λ-search: "
+  "Minibuffer prompt."
+  :type 'string
+  :group 'hsearch)
 
-    ;; (define-key map [mouse-2] 'hsearch-follow-mouse)
-    ;; (define-key map "\C-c\C-b" 'hsearch-go-back)
-    ;; (define-key map "\C-c\C-f" 'hsearch-go-forward)
-    ;; (define-key map "\C-c\C-c" 'hsearch-follow-symbol)
-    ;; ;; Documentation only, since we use minor-mode-overriding-map-alist.
-    ;; (define-key map "\r" 'hsearch-follow)
-    map)
-  "Keymap for hsearch mode.")
+(defcustom hsearch-search-rank-list
+  '(("hoogle" . hoogle-search)
+    ("hayoo" . hayoo-search))
+  "An alist of search engines and search function by preference.")
 
 (defface hsearch-category
   '((t :inherit font-lock-comment-face))
@@ -103,6 +100,19 @@
   '((t :inherit (list variable-pitch  font-lock-doc-face)))
   "A face for the doc of an `hsearch-result' class."
   :group 'hsearch)
+
+(defvar hsearch-mode-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map button-buffer-map)
+
+    ;; (define-key map [mouse-2] 'hsearch-follow-mouse)
+    ;; (define-key map "\C-c\C-b" 'hsearch-go-back)
+    ;; (define-key map "\C-c\C-f" 'hsearch-go-forward)
+    ;; (define-key map "\C-c\C-c" 'hsearch-follow-symbol)
+    ;; ;; Documentation only, since we use minor-mode-overriding-map-alist.
+    ;; (define-key map "\r" 'hsearch-follow)
+    map)
+  "Keymap for `hsearch-mode'.")
 
 (defun hsearch-mode ()
   "Major mode for searching Haskell.
@@ -136,6 +146,56 @@ Commands:
   ;;      'help-mode-revert-buffer)
 
   (run-mode-hooks 'hsearch-mode-hook))
+
+(defun hsearch-read-prompt ()
+  "Read from prompt and return (query . search-function)."
+  (let* (raw-query
+         (pref-search-pair (car hsearch-search-rank-list))
+         (pref-search-str (car pref-search-pair)))
+    
+    (setq raw-query (read-from-minibuffer hsearch-prompt
+                                      (concat pref-search-str ":")))
+    (hsearch-parse-prompt raw-query)))
+
+(defun hsearch-parse-prompt (raw-query)
+  "Parse RAW-STR and return (query . search-function)."
+  (let* (query
+         search-engine-str
+         search-engine-func
+         (pref-search-pair (car hsearch-search-rank-list))
+         (pref-search-str (car pref-search-pair)))
+
+    (setq search-engine-str
+          (if (and (string-match "^\\([a-z]+:\\)?\\(.*\\)" raw-query)
+                   (match-string 1 raw-query))
+              ;; Remove colon
+              (substring (match-string 1 raw-query) 0 -1)
+            pref-search-str))
+
+    (unless (setq search-engine-func
+                  (cdr (assoc search-engine-str hsearch-search-rank-list)))
+      (error "hsearch error: `%s' does not match a search engine"
+             search-engine-str))
+
+    (setq query (match-string 2 raw-query))
+    (when (string= "" query)
+      (error "hsearch error: query was empty"))
+
+    (cons query search-engine-func)))
+
+;;;###autoload
+(defun hsearch (&optional raw-query)
+  "Prompt for a query and display the results.
+
+If RAW-QUERY is non-nil, use it as the query instead of
+prompting."
+  (interactive)
+  (let* ((search-pair (if raw-query
+                          (hsearch-parse-prompt raw-query)
+                        (hsearch-read-prompt)))
+         (search-str (car search-pair))
+         (search-func (cdr search-pair)))
+    (funcall search-func search-str)))
 
 (defun hsearch-buffer ()
   "Initialize and return the *hsearch* buffer."
@@ -478,6 +538,10 @@ QUERY is an `hsearch-query' class."
 
 
 ;;; Hayoo support
+
+(defun hayoo-search (query)
+  "Search Hayoo for QUERY and display the results."
+  nil)
 
 
 ;; Enable lexical binding.  Shouldn't affect Emacsen without lexbind
