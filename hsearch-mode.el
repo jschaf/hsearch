@@ -99,7 +99,7 @@
   :group 'hsearch)
 
 (defface hsearch-doc
-  '((t :inherit (list variable-pitch  font-lock-doc-face)))
+  '((t :inherit (list variable-pitch font-lock-doc-face)))
   "A face for the doc of an `hsearch-result' class."
   :group 'hsearch)
 
