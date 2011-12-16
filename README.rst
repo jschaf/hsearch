@@ -20,7 +20,7 @@ Load the code:
 Screenshots
 ===========
 
-.. image:: raw/master/hsearch-screenshot_2011-12-16.png
+.. image:: https://github.com/jschaf/hsearch/raw/master/hsearch-screenshot_2011-12-16.png
 
               
 Overview
