@@ -543,7 +543,7 @@ QUERY is an `hsearch-query' class."
 
 (defun hayoo-search (query)
   "Search Hayoo for QUERY and display the results."
-  nil)
+  (error "Hsearch error: Hayoo support unimplemented"))
 
 
 ;; Enable lexical binding.  Shouldn't affect Emacsen without lexbind
