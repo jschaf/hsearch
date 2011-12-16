@@ -3,7 +3,7 @@
 ;; Author:  Joe Schafer <joe@jschaf.com>
 ;; Maintainer:  Joe Schafer <joe@jschaf.com>
 ;; Created: 10 Dec 2011
-;; Version:  0.1
+;; Version:  0.2
 ;; Keywords:  languages, haskell, hoogle, hayoo
 
 ;;; Installation:
