@@ -20,6 +20,7 @@ Load the code:
 Screenshots
 ===========
 
+.. image:: hsearch-screenshot_2011-12-16.png
 
               
 Overview
