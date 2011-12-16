@@ -15,12 +15,12 @@ Place hsearch-mode.el on your `load-path` by adding this to your
 Load the code:
 
     (autoload 'hsearch-mode "hsearch"
-              "Major mode for searching Haskell." t)
+              "Major mode for searching Haskell." nil)
 
 Screenshots
 ===========
 
-.. image:: hsearch-screenshot_2011-12-16.png
+.. image:: raw/master/hsearch-screenshot_2011-12-16.png
 
               
 Overview
