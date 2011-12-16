@@ -176,12 +176,12 @@ Commands:
 
     (unless (setq search-engine-func
                   (cdr (assoc search-engine-str hsearch-search-rank-list)))
-      (error "hsearch error: `%s' does not match a search engine"
+      (error "Hsearch error: `%s' does not match a search engine"
              search-engine-str))
 
     (setq query (match-string 2 raw-query))
     (when (string= "" query)
-      (error "hsearch error: query was empty"))
+      (error "Hsearch error: query was empty"))
 
     (cons query search-engine-func)))
 
