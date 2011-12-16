@@ -160,7 +160,7 @@ Commands:
     (hsearch-parse-prompt raw-query)))
 
 (defun hsearch-parse-prompt (raw-query)
-  "Parse RAW-STR and return (query . search-function)."
+  "Parse RAW-QUERY and return (query . search-function)."
   (let* (query
          search-engine-str
          search-engine-func
