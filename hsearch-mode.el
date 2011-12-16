@@ -210,6 +210,7 @@ prompting."
     buf))
 
 ;;; Rendering
+
 (defvar hsearch-display-buffer "*hsearch*"
   "The buffer in which to display query results.")
 
