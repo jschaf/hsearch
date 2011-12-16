@@ -32,11 +32,13 @@
 
 ;;; Todo:
 ;;
-;; * Headers with query and and url
+;; * Headers with query and url
 ;; 
 ;; * Use local version of Hoogle if available.
 ;; 
-;; * Parse links in Hoogle output.
+;; * Parse links in Hoogle output and linkify *hsearch* buffer.
+;;
+;; * Hoogle pagination
 ;;
 ;; * Fill paragraphs in long doc strings and break up multiple
 ;;   locations
