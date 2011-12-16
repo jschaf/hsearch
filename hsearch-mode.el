@@ -15,8 +15,8 @@
 ;;
 ;; Load the code:
 ;;
-;; (autoload 'hsearch-mode "hsearch"
-;;           "Major mode for searching Haskell." t)
+;; (autoload 'hsearch "hsearch"
+;;           "Function to search for Haskell." nil)
 
 ;;; Commentary:
 ;;
