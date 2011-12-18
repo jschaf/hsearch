@@ -124,7 +124,7 @@ Commands:
   (interactive)
   (kill-all-local-variables)
   (use-local-map hsearch-mode-map)
-  (setq mode-name "λ-search")
+  (setq mode-name "Î»-search")
   (setq major-mode 'hsearch-mode)
 
   (view-mode)
