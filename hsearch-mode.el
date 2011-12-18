@@ -484,72 +484,70 @@ QUERY is an `hsearch-query' class."
     (while (search-forward "class='ans'" nil 'noerror)
       (setq result (make-instance 'hsearch-result))
 
-      ;; Get category from the first a.dull
-      (search-forward "class='dull'")
-      (re-search-forward hoogle-a-tag-regexp)
-      ;; empty is function, data is data, class is class, module is
-      ;; module
-      (setq str (hsearch-strip-tags (match-string 1)))
-      (setq str (hsearch-decode-html-entities (hsearch-chomp str)))
-      (oset result :category (hsearch-result-category "" :category str))
-      
-      ;; Get name from a.a
-      (search-forward "class='a'")
-      (re-search-forward hoogle-a-tag-regexp)
-      ;; Remove <b> used for substring matching (e.g. map in
-      ;; mapAccumL) and convert html entities (e.g. &lt;*&gt; to <*>)
-      (setq str (hsearch-strip-tags (match-string 1)))
-      (setq str (hsearch-decode-html-entities str))
-      (oset result :name (hsearch-result-name "" :name str))
+      (with-slots (category name signature doc)
+          result
+        ;; Get category from the first a.dull
+        (search-forward "class='dull'")
+        (re-search-forward hoogle-a-tag-regexp)
+        ;; empty is function, data is data, class is class, module is
+        ;; module
+        (setq str (hsearch-strip-decode-chomp (match-string 1)))
+        (setq category (hsearch-result-category "" :category str))
 
-      ;; Get type signature from second a.dull
-      (search-forward "class='dull'")
-      (re-search-forward hoogle-a-tag-regexp)
-      ;; By stripping tags, we throw away some information.  Namely,
-      ;; how hoogle matches signatures that use different type
-      ;; variables.  We could add text-properties to the specific
-      ;; classes so we don't have redo the logic.
-      (setq str (hsearch-strip-tags (match-string 1)))
-      (setq str (hsearch-decode-html-entities str))
-      (setq str (hsearch-chomp str))
-      (oset result :signature (hsearch-result-signature "" :signature str))
-      
-      ;; Get defined locations from div.from.
-      (search-forward "class='from'")
-      (setq max-point (hoogle-search-bound "</div>"))
-      (loop do
-            (search-forward "class='p1'" max-point)
-            (re-search-forward hoogle-a-tag-regexp)
-            (setq str (match-string 1))
-            (setq location
-                  (hsearch-result-location "" :module-base str))
+        ;; Get name from a.a
+        (search-forward "class='a'")
+        (re-search-forward hoogle-a-tag-regexp)
+        ;; Remove <b> used for substring matching (e.g. map in
+        ;; mapAccumL) and convert html entities (e.g. &lt;*&gt; to <*>)
+        (setq str (hsearch-strip-decode-chomp (match-string 1)))
+        (setq name (hsearch-result-name "" :name str))
 
-            
-            (if (search-forward "class='p2'" max-point 'noerror)
-                (progn (re-search-forward hoogle-a-tag-regexp)
-                       (oset location :module-name (match-string 1))))
+        ;; Get type signature from second a.dull
+        (search-forward "class='dull'")
+        (re-search-forward hoogle-a-tag-regexp)
+        ;; By stripping tags, we throw away some information.  Namely,
+        ;; how hoogle matches signatures that use different type
+        ;; variables.  We could add text-properties to the specific
+        ;; classes so we don't have redo the logic.
+        (setq str (hsearch-strip-decode-chomp (match-string 1)))
+        (setq signature (hsearch-result-signature "" :signature str))
 
-            (add-location result location)
-            while
-            (save-excursion (search-forward "class='p" max-point 'noerror)))
-      (goto-char max-point)
+        ;; Get defined locations from div.from.
+        (search-forward "class='from'")
+        (setq max-point (hoogle-search-bound "</div>"))
+        ;; There may be a list of locations
+        (loop do
+              (search-forward "class='p1'" max-point)
+              (re-search-forward hoogle-a-tag-regexp)
+              (setq str (match-string 1))
+              (setq location
+                    (hsearch-result-location "" :module-base str))
 
-      ;; Get optional documentation string.  Maybe spread across
-      ;; multiple lines.  If it exists, assume it's always wrapped in
-      ;; a span tag.
-      (setq current-point (point))
-      (setq max-point (hoogle-search-bound "class='ans'"))
-      (if (search-forward "class='doc" max-point 'noerror)
-          (progn (re-search-forward hoogle-span-tag-regexp)
-                 (setq str (hsearch-strip-tags (match-string 1)))
-                 (setq str (hsearch-decode-html-entities str))
-                 (oset result :doc (hsearch-result-doc "" :doc str)))
-        ;; If there is no doc, we need to go back because the max
-        ;; bound for doc was "class='ans'".  Since search-forward
-        ;; moved us to the end of the match, we won't see it next
-        ;; iteration unless we move back.
-        (oset result :doc (hsearch-result-doc "" :doc ""))
-        (goto-char current-point))
+
+              (if (search-forward "class='p2'" max-point 'noerror)
+                  (progn (re-search-forward hoogle-a-tag-regexp)
+                         (oset location :module-name (match-string 1))))
+
+              (add-location result location)
+              while
+              (save-excursion (search-forward "class='p" max-point 'noerror)))
+        (goto-char max-point)
+
+        ;; Get optional documentation string.  Maybe spread across
+        ;; multiple lines.  If it exists, assume it's always wrapped in
+        ;; a span tag.
+        (setq current-point (point))
+        (setq max-point (hoogle-search-bound "class='ans'"))
+        (if (search-forward "class='doc" max-point 'noerror)
+            (progn (re-search-forward hoogle-span-tag-regexp)
+                   (setq str (hsearch-strip-decode-chomp (match-string 1)))
+                   (setq doc (hsearch-result-doc "" :doc str)))
+          ;; If there is no doc, we need to go back because the max
+          ;; bound for doc was "class='ans'".  Since search-forward
+          ;; moved us to the end of the match, we won't see it next
+          ;; iteration unless we move back.
+          (setq doc (hsearch-result-doc "" :doc ""))
+          (goto-char current-point)))
 
       (add-result query result))
     query))
