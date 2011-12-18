@@ -416,6 +416,10 @@ I feel like this function is already somewhere inside Emacs."
     (setq str (replace-match "" t t str)))
   str)
 
+(defsubst hsearch-strip-decode-chomp (str)
+  "Strip, decode HTML entites and chomp whitespace from STR."
+  (hsearch-strip-tags (hsearch-decode-html-entities (hsearch-chomp str))))
+
 
 ;;; Hoogle support
 
