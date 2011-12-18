@@ -45,9 +45,9 @@
 ;;; Todo:
 ;;
 ;; * Headers with query and url
-;; 
+;;
 ;; * Use local version of Hoogle if available.
-;; 
+;;
 ;; * Parse links in Hoogle output and linkify *hsearch* buffer.
 ;;
 ;; * Hoogle pagination
@@ -166,7 +166,7 @@ Commands:
   (let* (raw-query
          (pref-search-pair (car hsearch-search-rank-list))
          (pref-search-str (car pref-search-pair)))
-    
+
     (setq raw-query (read-from-minibuffer hsearch-prompt
                                       (concat pref-search-str ":")))
     (hsearch-parse-prompt raw-query)))
